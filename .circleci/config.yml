@@ -207,9 +207,8 @@ jobs:
 
       - run: |
           TAG=`cat /tmp/VERSION`
-          mkdir -p ~/.docker
-          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           mkdir -vp ~/.docker/cli-plugins/
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
           chmod a+x ~/.docker/cli-plugins/docker-buildx
           docker buildx version
@@ -244,13 +243,7 @@ jobs:
           echo "Creating manifest list for quay.io"
           docker manifest create "${target_repo}:$TAG" ${taglist[@]}
           docker manifest create "${target_repo}:latest" ${taglist[@]}
-          echo "Annotating manifest list with architectures"
-          for manifest_tag in ${taglist[@]}
-          do
-            docker manifest annotate --os linux --arch $(echo "${manifest_tag}" | rev | cut -d'-' -f1 | rev) "${target_repo}:$TAG" "${manifest_tag}"
-            docker manifest annotate --os linux --arch $(echo "${manifest_tag}" | rev | cut -d'-' -f1 | rev) "${target_repo}:latest" "${manifest_tag}"
-          done
-          echo "Pusing manifest list to quay.io"
+          echo "Pushing manifest list to quay.io"
           docker manifest push "${target_repo}:$TAG"
           docker manifest push "${target_repo}:latest"
 
