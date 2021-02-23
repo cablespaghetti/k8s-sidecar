@@ -207,6 +207,7 @@ jobs:
 
       - run: |
           TAG=`cat /tmp/VERSION`
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           mkdir -vp ~/.docker/cli-plugins/
           curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
           chmod a+x ~/.docker/cli-plugins/docker-buildx
@@ -226,7 +227,6 @@ jobs:
           echo "Replicating manifest list to quay.io"
           echo "${QUAY_BOT_PASSWORD}" | docker login -u="${QUAY_BOT_USERNAME}" --password-stdin quay.io
           target_repo="quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar"
-          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           manifest=$(docker manifest inspect "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG")
           taglist=()
           for line in $(echo "$manifest" | jq '.manifests[]' -rc)
