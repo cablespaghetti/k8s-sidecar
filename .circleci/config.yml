@@ -54,7 +54,7 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           docker context create buildcontext
           docker buildx create buildcontext --use
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME} --password-stdin docker.io
           docker buildx build --progress plain --push -t ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG --platform linux/amd64,linux/arm64,linux/arm/v7 .
 
       - persist_to_workspace:
@@ -214,7 +214,7 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           docker context create buildcontext
           docker buildx create buildcontext --use
-          echo $DOCKER_PASSWORD   | docker login -u $DOCKER_USERNAME   --password-stdin docker.io
+          echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME} --password-stdin docker.io
           echo "FROM ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG" \
             | docker buildx build \
             --push \
@@ -224,7 +224,7 @@ jobs:
             --platform linux/amd64,linux/arm64,linux/arm/v7 \
             -
           echo "Replicating manifest list to quay.io"
-          echo $QUAY_BOT_PASSWORD | docker login -u $QUAY_BOT_USERNAME --password-stdin quay.io
+          echo "${QUAY_BOT_PASSWORD}" | docker login -u="${QUAY_BOT_USERNAME} --password-stdin quay.io
           target_repo="quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar"
           echo '{"experimental":"enabled"}' > ~/.docker/config.json
           manifest=$(docker manifest inspect "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG")
