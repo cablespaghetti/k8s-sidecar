@@ -223,6 +223,7 @@ jobs:
             --tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:latest \
             --platform linux/amd64,linux/arm64,linux/arm/v7 \
             -
+          echo "Replicating manifest list to quay.io"
           echo $QUAY_BOT_PASSWORD | docker login -u $QUAY_BOT_USERNAME --password-stdin quay.io
           target_repo="quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar"
           echo '{"experimental":"enabled"}' > ~/.docker/config.json
@@ -233,18 +234,22 @@ jobs:
             architecture=$(echo "$line" | jq .platform.architecture -rc)
             digest=$(echo "$line" | jq .digest -rc)
             target_image="${target_repo}:$TAG-${architecture}"
+            echo "Pulling and pushing image for $architecture - $target_image"
             docker pull "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar@$digest"
             docker tag "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar@$digest" "$target_image"
             docker push "$target_image"
             taglist+=("$target_image")
           done
+          echo "Creating manifest list for quay.io"
           docker manifest create "${target_repo}:$TAG" ${taglist[@]}
           docker manifest create "${target_repo}:latest" ${taglist[@]}
+          echo "Annotating manifest list with architectures"
           for manifest_tag in ${taglist[@]}
           do
             docker manifest annotate --os linux --arch $(echo "${manifest_tag}" | rev | cut -d'-' -f1 | rev) "${target_repo}:$TAG" "${manifest_tag}"
             docker manifest annotate --os linux --arch $(echo "${manifest_tag}" | rev | cut -d'-' -f1 | rev) "${target_repo}:latest" "${manifest_tag}"
           done
+          echo "Pusing manifest list to quay.io"
           docker manifest push "${target_repo}:$TAG"
           docker manifest push "${target_repo}:latest"
 
