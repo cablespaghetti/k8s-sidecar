@@ -207,6 +207,7 @@ jobs:
 
       - run: |
           TAG=`cat /tmp/VERSION`
+          mkdir -p ~/.docker
           echo '{"experimental":"enabled"}' > ~/.docker/config.json
           mkdir -vp ~/.docker/cli-plugins/
           curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
