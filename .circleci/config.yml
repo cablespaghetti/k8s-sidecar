@@ -54,8 +54,8 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           docker context create buildcontext
           docker buildx create buildcontext --use
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-          docker buildx build --push -t ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG --platform linux/amd64,linux/arm64,linux/arm/v7 .
+          echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin docker.io
+          docker buildx build --progress plain --push -t ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG --platform linux/amd64,linux/arm64,linux/arm/v7 .
 
       - persist_to_workspace:
           root: /tmp
@@ -208,26 +208,44 @@ jobs:
       - run: |
           TAG=`cat /tmp/VERSION`
           mkdir -vp ~/.docker/cli-plugins/
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
           chmod a+x ~/.docker/cli-plugins/docker-buildx
           docker buildx version
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           docker context create buildcontext
           docker buildx create buildcontext --use
-          echo $DOCKER_PASSWORD   | docker login -u $DOCKER_USERNAME   --password-stdin docker.io
+          echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin docker.io
           echo "FROM ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG" \
             | docker buildx build \
             --push \
+            --progress plain \
             --tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG \
             --tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:latest \
             --platform linux/amd64,linux/arm64,linux/arm/v7 \
             -
-          echo $QUAY_BOT_PASSWORD | docker login -u $QUAY_BOT_USERNAME --password-stdin quay.io
-          docker pull docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG
-          docker tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG
-          docker push quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG
-          docker tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:latest
-          docker push quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:latest
+          echo "Replicating manifest list to quay.io"
+          echo "${QUAY_BOT_PASSWORD}" | docker login -u="${QUAY_BOT_USERNAME}" --password-stdin quay.io
+          target_repo="quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar"
+          manifest=$(docker manifest inspect "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG")
+          taglist=()
+          for line in $(echo "$manifest" | jq '.manifests[]' -rc)
+          do
+            architecture=$(echo "$line" | jq .platform.architecture -rc)
+            digest=$(echo "$line" | jq .digest -rc)
+            target_image="${target_repo}:$TAG-${architecture}"
+            echo "Pulling and pushing image for $architecture - $target_image"
+            docker pull "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar@$digest"
+            docker tag "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar@$digest" "$target_image"
+            docker push "$target_image"
+            taglist+=("$target_image")
+          done
+          echo "Creating manifest list for quay.io"
+          docker manifest create "${target_repo}:$TAG" ${taglist[@]}
+          docker manifest create "${target_repo}:latest" ${taglist[@]}
+          echo "Pushing manifest list to quay.io"
+          docker manifest push "${target_repo}:$TAG"
+          docker manifest push "${target_repo}:latest"
 
 workflows:
   version: 2
