@@ -256,57 +256,57 @@ workflows:
           filters:  # required since `deploy` has tag filters AND requires `build`
             tags:
               only: /.*/
-      - test-k8s-1-14:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-15:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-16:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-17:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-18:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-19:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
-      - test-k8s-1-20:
-          filters:  # required since `deploy` has tag filters AND requires `build`
-            tags:
-              only: /.*/
-          requires:
-            - build
+#      - test-k8s-1-14:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-15:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-16:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-17:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-18:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-19:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
+#      - test-k8s-1-20:
+#          filters:  # required since `deploy` has tag filters AND requires `build`
+#            tags:
+#              only: /.*/
+#          requires:
+#            - build
       - deploy:
           requires:
-            - test-k8s-1-14
-            - test-k8s-1-15
-            - test-k8s-1-16
-            - test-k8s-1-17
-            - test-k8s-1-18
-            - test-k8s-1-19
-            - test-k8s-1-20
+            - build
+#            - test-k8s-1-15
+#            - test-k8s-1-16
+#            - test-k8s-1-17
+#            - test-k8s-1-18
+#            - test-k8s-1-19
+#            - test-k8s-1-20
           filters:
             branches:
               ignore: /.*/
