@@ -55,7 +55,7 @@ jobs:
           docker context create buildcontext
           docker buildx create buildcontext --use
           docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-          docker buildx build --push -t ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG --platform linux/amd64,linux/arm64,linux/arm/v7 .
+          docker buildx build --progress plain --push -t ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG --platform linux/amd64,linux/arm64,linux/arm/v7 .
 
       - persist_to_workspace:
           root: /tmp
@@ -218,6 +218,7 @@ jobs:
           echo "FROM ${CIRCLE_PROJECT_USERNAME}/k8s-sidecar-build:$TAG" \
             | docker buildx build \
             --push \
+            --progress plain \
             --tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG \
             --tag docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:latest \
             --platform linux/amd64,linux/arm64,linux/arm/v7 \
