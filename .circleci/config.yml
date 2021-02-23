@@ -225,6 +225,7 @@ jobs:
             -
           echo $QUAY_BOT_PASSWORD | docker login -u $QUAY_BOT_USERNAME --password-stdin quay.io
           target_repo="quay.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar"
+          echo '{"experimental":"enabled"}' > ~/.docker/config.json
           manifest=$(docker manifest inspect "docker.io/${CIRCLE_PROJECT_USERNAME}/k8s-sidecar:$TAG")
           taglist=()
           for line in $(echo "$manifest" | jq '.manifests[]' -rc)
